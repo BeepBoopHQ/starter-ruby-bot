@@ -14,8 +14,8 @@ end
 
 # listen for channel_joined event - https://api.slack.com/events/channel_joined
 client.on :channel_joined do |data|
-  if joiner_is_bot?(data)
-    client.message channel: data['channel']['id'], text: starter_text
+  if joiner_is_bot?(client, data)
+    client.message channel: data['channel']['id'], text: "Thanks for the invite! I don\'t do much yet, but #{help}"
   else
     puts "Someone far less important than #{client.self['name']} joined #{data['channel']['id']}"
   end
@@ -30,7 +30,7 @@ client.on :message do |data|
     client.message channel: data['channel'], text: "Hello <@#{data['user']}>."
 
     if direct_message?(data)
-      client.message channel: data['channel'], text: "I feel like I've known you forever."
+      client.message channel: data['channel'], text: "It\'s nice to talk to you directly."
     end
 
   when 'attachment', 'bot attachment' then
@@ -39,6 +39,12 @@ client.on :message do |data|
 
   when bot_mentioned(client)
     client.message channel: data['channel'], text: 'You really do care about me. :heart:'
+
+  when 'bot help', 'help' then
+    client.message channel: data['channel'], text: help
+
+  when /^bot/ then
+    client.message channel: data['channel'], text: "Sorry <@#{data['user']}>, I don\'t understand. \n#{help}"
   end
 end
 
@@ -52,15 +58,16 @@ def bot_mentioned(client)
   /\<\@#{client.self['id']}\>+/
 end
 
-def joiner_is_bot?(data)
+def joiner_is_bot?(client, data)
  /^\<\@#{client.self['id']}\>/.match data['channel']['latest']['text']
 end
 
-def starter_text
-  %Q("Hello, I'm the BeepBoop starter bot. I don't do much yet, but I would like it if you talked to me anyway: \n
-      `bot hi`\n
-      `bot attachment`\n
-      `@<your bot\'s name>`\n)
+def help
+  %Q(I will respond to the following messages: \n
+      `bot hi` for a simple message.\n
+      `bot attachment` to see a Slack attachment message.\n
+      `@<your bot\'s name>` to demonstrate detecting a mention.\n
+      `bot help` to see this again.)
 end
 
 def post_message_payload(data)
