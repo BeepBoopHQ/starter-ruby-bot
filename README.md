@@ -20,7 +20,7 @@ Things are looking good if the console prints something like:
 	Connected <your bot name> to <your slack team> team at https://<your slack team>.slack.com.
 
 ### Run locally in Docker
-	docker build -t starter-ruby .`
+	docker build -t starter-ruby .
 	docker run --rm -it -e SLACK_TOKEN=<YOUR SLACK API TOKEN> starter-ruby
 
 ### Run in BeepBoop
