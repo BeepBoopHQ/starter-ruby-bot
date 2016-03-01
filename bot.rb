@@ -1,23 +1,31 @@
 require 'slack-ruby-client'
+require 'logging'
+
+logger = Logging.logger(STDOUT)
+logger.level = :debug
 
 Slack.configure do |config|
   config.token = ENV['SLACK_TOKEN']
-  fail 'Missing ENV[SLACK_TOKEN]!' unless config.token
+  if not config.token
+    logger.fatal('Missing ENV[SLACK_TOKEN]! Exiting program')
+    exit
+  end
 end
 
 client = Slack::RealTime::Client.new
 
 # listen for hello (connection) event - https://api.slack.com/events/hello
 client.on :hello do
-  puts "Connected '#{client.self['name']}' to '#{client.team['name']}' team at https://#{client.team['domain']}.slack.com."
+  logger.debug("Connected '#{client.self['name']}' to '#{client.team['name']}' team at https://#{client.team['domain']}.slack.com.")
 end
 
 # listen for channel_joined event - https://api.slack.com/events/channel_joined
 client.on :channel_joined do |data|
   if joiner_is_bot?(client, data)
     client.message channel: data['channel']['id'], text: "Thanks for the invite! I don\'t do much yet, but #{help}"
+    logger.debug("#{client.self['name']} joined channel #{data['channel']['id']}")
   else
-    puts "Someone far less important than #{client.self['name']} joined #{data['channel']['id']}"
+    logger.debug("Someone far less important than #{client.self['name']} joined #{data['channel']['id']}")
   end
 end
 
@@ -28,23 +36,29 @@ client.on :message do |data|
   when 'hi', 'bot hi' then
     client.typing channel: data['channel']
     client.message channel: data['channel'], text: "Hello <@#{data['user']}>."
+    logger.debug("<@#{data['user']}> said hi")
 
     if direct_message?(data)
       client.message channel: data['channel'], text: "It\'s nice to talk to you directly."
+      logger.debug("And it was a direct message")
     end
 
   when 'attachment', 'bot attachment' then
     # attachment messages require using web_client
     client.web_client.chat_postMessage(post_message_payload(data))
+    logger.debug("Attachment message posted")
 
   when bot_mentioned(client)
     client.message channel: data['channel'], text: 'You really do care about me. :heart:'
+    logger.debug("Bot mentioned in channel #{data['channel']}")
 
   when 'bot help', 'help' then
     client.message channel: data['channel'], text: help
+    logger.debug("A call for help")
 
   when /^bot/ then
     client.message channel: data['channel'], text: "Sorry <@#{data['user']}>, I don\'t understand. \n#{help}"
+    logger.debug("Unknown command")
   end
 end
 

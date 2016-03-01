@@ -14,6 +14,11 @@ GEM
       json (~> 1.8)
       multi_xml (>= 0.5.2)
     json (1.8.3)
+    little-plugger (1.1.4)
+    logging (2.0.0)
+      little-plugger (~> 1.1)
+      multi_json (~> 1.10)
+    multi_json (1.11.2)
     multi_xml (0.5.5)
     multipart-post (2.0.0)
     slack-ruby-client (0.5.1)
@@ -33,4 +38,5 @@ DEPENDENCIES
   eventmachine
   faye-websocket
   httparty
+  logging
   slack-ruby-client
